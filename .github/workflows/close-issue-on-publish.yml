@@ -1,14 +1,39 @@
+# PoC replica of WordPress/Community-Team/.github/workflows/close-issue-on-publish.yml
+#
+# Deviations from the target file (documented in the report):
+#   * `permissions: issues: write` is stated explicitly, because the PDFtoMark
+#     organisation forces read-only default token permissions for all repos.
+#     The target repository uses the *default* token permissions, which grant
+#     issues: write (proven by bot-authored issues created by
+#     create-monthly-meeting-sub-issues.yml in WordPress/Community-Team).
+#   * an identity echo step was added so the run log shows that the commenter's
+#     association is never evaluated.
+#
+# Everything else (trigger, `if: contains(comment.body, '//publish')`, the three
+# gh commands) is byte-identical to the target workflow.
+
 name: Close and label issue on publish comment
 
 on:
   issue_comment:
     types: [created, edited]
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
-  publish-commment:
+  publish-commmment:
     runs-on: ubuntu-latest
     if: contains(github.event.comment.body, '//publish')
     steps:
+      - name: Show who is commenting (no authorization check exists)
+        run: |
+          echo "COMMENTER=${{ github.event.comment.user.login }}"
+          echo "COMMENT_AUTHOR_ASSOCIATION=${{ github.event.comment.author_association }}"
+          echo "ISSUE_AUTHOR=${{ github.event.issue.user.login }}"
+          echo "The job if: only inspects the comment body."
+
       - name: Remove Labels
         if: contains(github.event.issue.labels.*.name, '[Content] Needs Co-host')
         shell: bash
